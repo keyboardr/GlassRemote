@@ -248,13 +248,13 @@ public class RemoteMessengerService extends Service {
 
 	@Override
 	public IBinder onBind(Intent intent) {
-		mBinder.mCallback = new WeakReference<Callback>(STUB_CALLBACK);
+		mBinder.setCallback(null);
 		return mBinder;
 	}
 
 	@Override
 	public boolean onUnbind(Intent intent) {
-		mBinder.mCallback = new WeakReference<Callback>(STUB_CALLBACK);
+		mBinder.setCallback(null);
 		disconnect();
 		return super.onUnbind(intent);
 	}
