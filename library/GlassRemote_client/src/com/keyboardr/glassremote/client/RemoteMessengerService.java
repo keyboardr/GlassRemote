@@ -37,7 +37,7 @@ public class RemoteMessengerService extends Service {
 		}
 
 		@Override
-		public void sendMessage(byte[] message) throws IllegalStateException {
+		public void sendMessage(String message) throws IllegalStateException {
 			mManager.sendMessage(message);
 		}
 

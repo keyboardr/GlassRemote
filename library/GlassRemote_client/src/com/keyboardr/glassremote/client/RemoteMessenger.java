@@ -10,7 +10,7 @@ public interface RemoteMessenger {
 
 		public void onDisconnected(BluetoothDevice remoteDevice);
 
-		public void onReceiveMessage(byte[] message);
+		public void onReceiveMessage(String message);
 	}
 
 	public void setCallback(Callback callback);
@@ -21,6 +21,6 @@ public interface RemoteMessenger {
 
 	public void disconnect();
 
-	public void sendMessage(byte[] message) throws IllegalStateException;
+	public void sendMessage(String message) throws IllegalStateException;
 
 }

@@ -1,11 +1,12 @@
 package com.keyboardr.glassremote.server;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.UUID;
 
-import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -16,7 +17,6 @@ import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Message;
 
 public abstract class MessageService extends Service {
 	private BluetoothAdapter mBluetoothAdapter;
@@ -79,7 +79,6 @@ public abstract class MessageService extends Service {
 	}
 
 	private class ConnectedThread extends Thread {
-		private static final int MESSAGE_READ = 0;
 		private final BluetoothSocket mSocket;
 		private final InputStream mInputStream;
 		private final OutputStream mOutputStream;
@@ -103,14 +102,21 @@ public abstract class MessageService extends Service {
 
 		@Override
 		public void run() {
-			byte[] buffer = new byte[1024];
-			int bytes;
+			BufferedReader r = new BufferedReader(new InputStreamReader(
+					mInputStream));
 
 			while (true) {
 				try {
-					bytes = mInputStream.read(buffer);
-					mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer)
-							.sendToTarget();
+					final String string = r.readLine();
+					if (string != null) {
+						mHandler.post(new Runnable() {
+
+							@Override
+							public void run() {
+								onReceiveMessage(string);
+							}
+						});
+					}
 				} catch (IOException e) {
 					break;
 				}
@@ -123,9 +129,9 @@ public abstract class MessageService extends Service {
 			connectionLost(mSocket);
 		}
 
-		public void write(byte[] bytes) {
+		public void write(String message) {
 			try {
-				mOutputStream.write(bytes);
+				mOutputStream.write(message.getBytes());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -200,13 +206,7 @@ public abstract class MessageService extends Service {
 		mAcceptThread.start();
 	}
 
-	@SuppressLint("HandlerLeak")
-	private final Handler mHandler = new Handler() {
-		@Override
-		public void handleMessage(Message msg) {
-			onReceiveMessage((byte[]) msg.obj);
-		}
-	};
+	private final Handler mHandler = new Handler();
 
 	// Accessible methods begin here
 
@@ -214,17 +214,17 @@ public abstract class MessageService extends Service {
 
 	protected abstract void onDisconnected(BluetoothDevice remoteDevice);
 
-	protected abstract void onReceiveMessage(byte[] msg);
+	protected abstract void onReceiveMessage(String message);
 
 	protected boolean isConnected() {
 		return mConnectedThread != null && mConnectedThread.isAlive();
 	}
 
-	protected void sendMessage(byte[] buffer) {
+	protected void sendMessage(String message) {
 		if (!isConnected()) {
 			throw new IllegalStateException("Not connected");
 		}
-		mConnectedThread.write(buffer);
+		mConnectedThread.write(message + "\n");
 	}
 
 }

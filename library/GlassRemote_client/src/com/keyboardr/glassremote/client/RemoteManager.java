@@ -1,7 +1,9 @@
 package com.keyboardr.glassremote.client;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.Set;
@@ -42,16 +44,32 @@ public class RemoteManager implements RemoteMessenger {
 			return;
 		}
 
+		connect(connectedDevice, true);
+	}
+
+	protected void connect(BluetoothDevice connectedDevice, boolean retry) {
+		BluetoothSocket socket = null;
 		try {
-			BluetoothSocket socket = connectedDevice
+			socket = connectedDevice
 					.createInsecureRfcommSocketToServiceRecord(MY_UUID);
 			socket.connect();
 			mConnectedThread = new ConnectedThread(socket);
 			mConnectedThread.start();
 			doOnConnected(socket.getRemoteDevice());
 		} catch (IOException e) {
-			doOnConnectionFailed();
-			e.printStackTrace();
+			if (socket != null) {
+				try {
+					socket.close();
+				} catch (IOException e2) {
+					e2.printStackTrace();
+				}
+			}
+			if (retry) {
+				connect(connectedDevice, false);
+			} else {
+				doOnConnectionFailed();
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -63,11 +81,11 @@ public class RemoteManager implements RemoteMessenger {
 	}
 
 	@Override
-	public void sendMessage(byte[] message) throws IllegalStateException {
+	public void sendMessage(String message) throws IllegalStateException {
 		if (mConnectedThread == null || !mConnectedThread.isAlive()) {
 			throw new IllegalStateException("Not connected");
 		}
-		mConnectedThread.write(message);
+		mConnectedThread.write(message + "\n");
 	}
 
 	private Callback getCallback() {
@@ -96,7 +114,7 @@ public class RemoteManager implements RemoteMessenger {
 		getCallback().onDisconnected(device);
 	}
 
-	protected void doOnReceiveMessage(byte[] message) {
+	protected void doOnReceiveMessage(String message) {
 		getCallback().onReceiveMessage(message);
 	}
 
@@ -117,7 +135,7 @@ public class RemoteManager implements RemoteMessenger {
 		}
 
 		@Override
-		public void onReceiveMessage(byte[] message) {
+		public void onReceiveMessage(String message) {
 		}
 
 	};
@@ -147,13 +165,13 @@ public class RemoteManager implements RemoteMessenger {
 
 		@Override
 		public void run() {
-			byte[] buffer = new byte[1024];
-			int bytes;
+			BufferedReader r = new BufferedReader(new InputStreamReader(
+					mInputStream));
 
 			while (true) {
 				try {
-					bytes = mInputStream.read(buffer);
-					mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer)
+					final String string = r.readLine();
+					mHandler.obtainMessage(MESSAGE_READ, -1, -1, string)
 							.sendToTarget();
 				} catch (IOException e) {
 					break;
@@ -167,9 +185,9 @@ public class RemoteManager implements RemoteMessenger {
 			doOnDisconnected(mSocket.getRemoteDevice());
 		}
 
-		public void write(byte[] bytes) {
+		public void write(String message) {
 			try {
-				mOutputStream.write(bytes);
+				mOutputStream.write(message.getBytes());
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -214,7 +232,7 @@ public class RemoteManager implements RemoteMessenger {
 	private final Handler mHandler = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
-			doOnReceiveMessage((byte[]) msg.obj);
+			doOnReceiveMessage((String) msg.obj);
 		}
 	};
 
