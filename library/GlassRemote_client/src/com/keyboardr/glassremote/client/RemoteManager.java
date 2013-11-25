@@ -9,20 +9,17 @@ import java.lang.ref.WeakReference;
 import java.util.Set;
 import java.util.UUID;
 
-import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
-import android.os.Message;
 import android.os.ParcelUuid;
 
 public class RemoteManager implements RemoteMessenger {
 
-	private WeakReference<Callback> mCallback = new WeakReference<Callback>(
-			STUB_CALLBACK);
+	private WeakReference<Callback> mCallback = new WeakReference<Callback>(STUB_CALLBACK);
 
 	@Override
 	public void setCallback(Callback callback) {
@@ -41,7 +38,7 @@ public class RemoteManager implements RemoteMessenger {
 	@Override
 	public void requestConnect() {
 		mWorkerHandler.post(new Runnable() {
-			
+
 			@Override
 			public void run() {
 				BluetoothDevice connectedDevice = getConnectedDevice();
@@ -58,8 +55,7 @@ public class RemoteManager implements RemoteMessenger {
 	protected void connect(BluetoothDevice connectedDevice, boolean retry) {
 		BluetoothSocket socket = null;
 		try {
-			socket = connectedDevice
-					.createInsecureRfcommSocketToServiceRecord(MY_UUID);
+			socket = connectedDevice.createInsecureRfcommSocketToServiceRecord(MY_UUID);
 			socket.connect();
 			mConnectedThread = new ConnectedThread(socket);
 			mConnectedThread.start();
@@ -98,13 +94,11 @@ public class RemoteManager implements RemoteMessenger {
 
 	private Callback getCallback() {
 		if (mCallback.get() == null) {
-			mCallback = new WeakReference<RemoteMessenger.Callback>(
-					STUB_CALLBACK);
+			mCallback = new WeakReference<RemoteMessenger.Callback>(STUB_CALLBACK);
 		}
 		synchronized (RemoteMessenger.class) {
 			if (mCallback.get() == null) {
-				mCallback = new WeakReference<RemoteMessenger.Callback>(
-						STUB_CALLBACK);
+				mCallback = new WeakReference<RemoteMessenger.Callback>(STUB_CALLBACK);
 			}
 			return mCallback.get();
 		}
@@ -112,7 +106,7 @@ public class RemoteManager implements RemoteMessenger {
 
 	protected void doOnConnected(final BluetoothDevice device) {
 		mMainHandler.post(new Runnable() {
-			
+
 			@Override
 			public void run() {
 				getCallback().onConnected(device);
@@ -122,7 +116,7 @@ public class RemoteManager implements RemoteMessenger {
 
 	protected void doOnConnectionFailed() {
 		mMainHandler.post(new Runnable() {
-			
+
 			@Override
 			public void run() {
 				getCallback().onConnectionFailed();
@@ -132,7 +126,7 @@ public class RemoteManager implements RemoteMessenger {
 
 	protected void doOnDisconnected(final BluetoothDevice device) {
 		mMainHandler.post(new Runnable() {
-			
+
 			@Override
 			public void run() {
 				getCallback().onDisconnected(device);
@@ -142,7 +136,7 @@ public class RemoteManager implements RemoteMessenger {
 
 	protected void doOnReceiveMessage(final String message) {
 		mMainHandler.post(new Runnable() {
-			
+
 			@Override
 			public void run() {
 				getCallback().onReceiveMessage(message);
@@ -196,14 +190,13 @@ public class RemoteManager implements RemoteMessenger {
 
 		@Override
 		public void run() {
-			BufferedReader r = new BufferedReader(new InputStreamReader(
-					mInputStream));
+			BufferedReader r = new BufferedReader(new InputStreamReader(mInputStream));
 
 			while (true) {
 				try {
 					final String string = r.readLine();
 					mMainHandler.post(new Runnable() {
-						
+
 						@Override
 						public void run() {
 							doOnReceiveMessage(string);
@@ -253,8 +246,7 @@ public class RemoteManager implements RemoteMessenger {
 	}
 
 	private BluetoothDevice getConnectedDevice() {
-		Set<BluetoothDevice> pairedDevices = mBluetoothAdapter
-				.getBondedDevices();
+		Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
 		for (BluetoothDevice device : pairedDevices) {
 			device.fetchUuidsWithSdp();
 			for (ParcelUuid id : device.getUuids()) {
@@ -267,9 +259,9 @@ public class RemoteManager implements RemoteMessenger {
 	}
 
 	private final Handler mMainHandler = new Handler(Looper.getMainLooper());
-	
+
 	private final HandlerThread mWorkerThread = new HandlerThread("RemoteManagerWorker");
-	
+
 	private final Handler mWorkerHandler;
 
 }
