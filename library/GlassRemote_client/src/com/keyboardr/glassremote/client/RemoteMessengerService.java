@@ -13,8 +13,6 @@ public class RemoteMessengerService extends Service {
 
 	private final RemoteManager mManager;
 
-	private final UUID MY_UUID;
-
 	private class RemoteConnectionBinder extends Binder implements
 			RemoteMessenger {
 
@@ -46,8 +44,7 @@ public class RemoteMessengerService extends Service {
 	}
 
 	protected RemoteMessengerService(UUID uuid) {
-		MY_UUID = uuid;
-		mManager = new RemoteManager(MY_UUID);
+		mManager = new RemoteManager(uuid);
 	}
 
 	@Override
