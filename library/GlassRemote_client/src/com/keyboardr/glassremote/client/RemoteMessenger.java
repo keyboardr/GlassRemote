@@ -1,12 +1,14 @@
 package com.keyboardr.glassremote.client;
 
+import android.bluetooth.BluetoothDevice;
+
 public interface RemoteMessenger {
 	public static interface Callback {
-		public void onConnected();
+		public void onConnected(BluetoothDevice remoteDevice);
 
 		public void onConnectionFailed();
 
-		public void onDisconnected();
+		public void onDisconnected(BluetoothDevice remoteDevice);
 
 		public void onReceiveMessage(byte[] message);
 	}

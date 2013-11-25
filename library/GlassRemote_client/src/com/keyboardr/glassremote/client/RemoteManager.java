@@ -48,7 +48,7 @@ public class RemoteManager implements RemoteMessenger {
 			socket.connect();
 			mConnectedThread = new ConnectedThread(socket);
 			mConnectedThread.start();
-			doOnConnected();
+			doOnConnected(socket.getRemoteDevice());
 		} catch (IOException e) {
 			doOnConnectionFailed();
 			e.printStackTrace();
@@ -84,16 +84,16 @@ public class RemoteManager implements RemoteMessenger {
 		}
 	}
 
-	protected void doOnConnected() {
-		getCallback().onConnected();
+	protected void doOnConnected(BluetoothDevice device) {
+		getCallback().onConnected(device);
 	}
 
 	protected void doOnConnectionFailed() {
 		getCallback().onConnectionFailed();
 	}
 
-	protected void doOnDisconnected() {
-		getCallback().onDisconnected();
+	protected void doOnDisconnected(BluetoothDevice device) {
+		getCallback().onDisconnected(device);
 	}
 
 	protected void doOnReceiveMessage(byte[] message) {
@@ -105,7 +105,7 @@ public class RemoteManager implements RemoteMessenger {
 	private static final Callback STUB_CALLBACK = new Callback() {
 
 		@Override
-		public void onConnected() {
+		public void onConnected(BluetoothDevice device) {
 		}
 
 		@Override
@@ -113,7 +113,7 @@ public class RemoteManager implements RemoteMessenger {
 		}
 
 		@Override
-		public void onDisconnected() {
+		public void onDisconnected(BluetoothDevice device) {
 		}
 
 		@Override
@@ -164,7 +164,7 @@ public class RemoteManager implements RemoteMessenger {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			doOnDisconnected();
+			doOnDisconnected(mSocket.getRemoteDevice());
 		}
 
 		public void write(byte[] bytes) {
