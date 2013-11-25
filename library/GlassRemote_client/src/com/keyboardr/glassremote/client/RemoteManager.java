@@ -15,6 +15,7 @@ import android.bluetooth.BluetoothSocket;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.os.Message;
 import android.os.ParcelUuid;
 
 public class RemoteManager implements RemoteMessenger {
@@ -37,19 +38,7 @@ public class RemoteManager implements RemoteMessenger {
 
 	@Override
 	public void requestConnect() {
-		mWorkerHandler.post(new Runnable() {
-
-			@Override
-			public void run() {
-				BluetoothDevice connectedDevice = getConnectedDevice();
-				if (connectedDevice == null) {
-					doOnConnectionFailed();
-					return;
-				}
-
-				connect(connectedDevice, true);
-			}
-		});
+		mWorkerHandler.obtainMessage(DO_CONNECT).sendToTarget();
 	}
 
 	protected void connect(BluetoothDevice connectedDevice, boolean retry) {
@@ -59,7 +48,7 @@ public class RemoteManager implements RemoteMessenger {
 			socket.connect();
 			mConnectedThread = new ConnectedThread(socket);
 			mConnectedThread.start();
-			doOnConnected(socket.getRemoteDevice());
+			mMainHandler.obtainMessage(DO_ON_CONNECTED, socket.getRemoteDevice()).sendToTarget();
 		} catch (IOException e) {
 			if (socket != null) {
 				try {
@@ -71,7 +60,7 @@ public class RemoteManager implements RemoteMessenger {
 			if (retry) {
 				connect(connectedDevice, false);
 			} else {
-				doOnConnectionFailed();
+				mMainHandler.obtainMessage(DO_CONNECTION_FAILED).sendToTarget();
 				e.printStackTrace();
 			}
 		}
@@ -102,46 +91,6 @@ public class RemoteManager implements RemoteMessenger {
 			}
 			return mCallback.get();
 		}
-	}
-
-	protected void doOnConnected(final BluetoothDevice device) {
-		mMainHandler.post(new Runnable() {
-
-			@Override
-			public void run() {
-				getCallback().onConnected(device);
-			}
-		});
-	}
-
-	protected void doOnConnectionFailed() {
-		mMainHandler.post(new Runnable() {
-
-			@Override
-			public void run() {
-				getCallback().onConnectionFailed();
-			}
-		});
-	}
-
-	protected void doOnDisconnected(final BluetoothDevice device) {
-		mMainHandler.post(new Runnable() {
-
-			@Override
-			public void run() {
-				getCallback().onDisconnected(device);
-			}
-		});
-	}
-
-	protected void doOnReceiveMessage(final String message) {
-		mMainHandler.post(new Runnable() {
-
-			@Override
-			public void run() {
-				getCallback().onReceiveMessage(message);
-			}
-		});
 	}
 
 	private final UUID MY_UUID;
@@ -199,7 +148,7 @@ public class RemoteManager implements RemoteMessenger {
 
 						@Override
 						public void run() {
-							doOnReceiveMessage(string);
+							mMainHandler.obtainMessage(DO_ON_RECEIVE_MESSAGE, string).sendToTarget();
 						}
 					});
 				} catch (IOException e) {
@@ -211,7 +160,7 @@ public class RemoteManager implements RemoteMessenger {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			doOnDisconnected(mSocket.getRemoteDevice());
+			mMainHandler.obtainMessage(DO_DISCONNECTED, mSocket.getRemoteDevice()).sendToTarget();
 		}
 
 		public void write(String message) {
@@ -237,7 +186,7 @@ public class RemoteManager implements RemoteMessenger {
 
 	public RemoteManager(UUID uuid) {
 		mWorkerThread.start();
-		mWorkerHandler = new Handler(mWorkerThread.getLooper());
+		mWorkerHandler = new WorkerHandler(mWorkerThread.getLooper());
 		MY_UUID = uuid;
 		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 		for (BluetoothDevice device : mBluetoothAdapter.getBondedDevices()) {
@@ -258,10 +207,58 @@ public class RemoteManager implements RemoteMessenger {
 		return null;
 	}
 
-	private final Handler mMainHandler = new Handler(Looper.getMainLooper());
+	private static final int DO_ON_CONNECTED = 0;
+	private static final int DO_CONNECTION_FAILED = 1;
+	private static final int DO_DISCONNECTED = 2;
+	private static final int DO_ON_RECEIVE_MESSAGE = 3;
+
+	private final Handler mMainHandler = new Handler(Looper.getMainLooper()) {
+		@Override
+		public void handleMessage(Message msg) {
+			switch (msg.what) {
+			case DO_ON_CONNECTED:
+				getCallback().onConnected((BluetoothDevice) msg.obj);
+				break;
+			case DO_CONNECTION_FAILED:
+				getCallback().onConnectionFailed();
+				break;
+			case DO_DISCONNECTED:
+				getCallback().onDisconnected((BluetoothDevice) msg.obj);
+				break;
+			case DO_ON_RECEIVE_MESSAGE:
+				getCallback().onReceiveMessage((String) msg.obj);
+				break;
+			}
+		}
+	};
+
+	private static final int DO_CONNECT = 4;
 
 	private final HandlerThread mWorkerThread = new HandlerThread("RemoteManagerWorker");
 
 	private final Handler mWorkerHandler;
+
+	private class WorkerHandler extends Handler {
+
+		public WorkerHandler(Looper looper) {
+			super(looper);
+		}
+
+		@Override
+		public void handleMessage(Message msg) {
+			switch (msg.what) {
+			case DO_CONNECT:
+				BluetoothDevice connectedDevice = getConnectedDevice();
+				if (connectedDevice == null) {
+					mMainHandler.obtainMessage(DO_CONNECTION_FAILED).sendToTarget();
+					return;
+				}
+
+				connect(connectedDevice, true);
+				break;
+			}
+		}
+
+	}
 
 }
