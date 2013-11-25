@@ -209,14 +209,14 @@ public class RemoteMessengerService extends Service {
 	}
 
 	private void connect() {
-		BluetoothDevice glassDevice = getConnectedGlassMusicPlayer();
-		if (glassDevice == null) {
+		BluetoothDevice connectedDevice = getConnectedDevice();
+		if (connectedDevice == null) {
 			mBinder.doOnConnectionFailed();
 			return;
 		}
 
 		try {
-			BluetoothSocket socket = glassDevice
+			BluetoothSocket socket = connectedDevice
 					.createInsecureRfcommSocketToServiceRecord(MY_UUID);
 			socket.connect();
 			mConnectedThread = new ConnectedThread(socket);
@@ -232,7 +232,7 @@ public class RemoteMessengerService extends Service {
 		mConnectedThread.cancel();
 	}
 
-	private BluetoothDevice getConnectedGlassMusicPlayer() {
+	private BluetoothDevice getConnectedDevice() {
 		Set<BluetoothDevice> pairedDevices = mBluetoothAdapter
 				.getBondedDevices();
 		for (BluetoothDevice device : pairedDevices) {
