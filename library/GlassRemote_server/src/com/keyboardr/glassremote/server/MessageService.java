@@ -176,14 +176,26 @@ public abstract class MessageService extends Service {
 		super.onDestroy();
 	}
 
-	private void manageConnectedSocket(BluetoothSocket socket) {
+	private void manageConnectedSocket(final BluetoothSocket socket) {
 		mConnectedThread = new ConnectedThread(socket);
 		mConnectedThread.start();
-		onConnected(socket.getRemoteDevice());
+		mHandler.post(new Runnable() {
+
+			@Override
+			public void run() {
+				onConnected(socket.getRemoteDevice());
+			}
+		});
 	}
 
-	private void connectionLost(BluetoothSocket socket) {
-		onDisconnected(socket.getRemoteDevice());
+	private void connectionLost(final BluetoothSocket socket) {
+		mHandler.post(new Runnable() {
+
+			@Override
+			public void run() {
+				onDisconnected(socket.getRemoteDevice());
+			}
+		});
 		mAcceptThread = new AcceptThread();
 		mAcceptThread.start();
 	}
