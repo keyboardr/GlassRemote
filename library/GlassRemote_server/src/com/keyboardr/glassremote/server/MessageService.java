@@ -17,6 +17,7 @@ import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
+import android.util.Log;
 
 public abstract class MessageService extends Service {
 	private BluetoothAdapter mBluetoothAdapter;
@@ -27,28 +28,27 @@ public abstract class MessageService extends Service {
 	private final UUID MY_UUID;
 
 	private class AcceptThread extends Thread {
-		private final BluetoothServerSocket mServerSocket;
+		private BluetoothServerSocket mServerSocket;
 		public volatile boolean isRunning;
-
-		public AcceptThread() {
-			BluetoothServerSocket tmp = null;
-			try {
-				tmp = mBluetoothAdapter
-						.listenUsingInsecureRfcommWithServiceRecord(NAME,
-								MY_UUID);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			mServerSocket = tmp;
-		}
 
 		@Override
 		public void run() {
 			isRunning = true;
+
+			BluetoothServerSocket tmp = null;
+			try {
+				tmp = mBluetoothAdapter.listenUsingRfcommWithServiceRecord(
+						NAME, MY_UUID);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			mServerSocket = tmp;
 			BluetoothSocket socket = null;
 			while (true) {
 				try {
+					Log.d(getClass().getSimpleName(), "Accepting");
 					socket = mServerSocket.accept();
+					Log.d(getClass().getSimpleName(), "Accepted");
 				} catch (IOException e) {
 					e.printStackTrace();
 					break;

@@ -20,7 +20,8 @@ import android.os.ParcelUuid;
 
 public class RemoteManager implements RemoteMessenger {
 
-	private WeakReference<Callback> mCallback = new WeakReference<Callback>(STUB_CALLBACK);
+	private WeakReference<Callback> mCallback = new WeakReference<Callback>(
+			STUB_CALLBACK);
 
 	@Override
 	public void setCallback(Callback callback) {
@@ -42,13 +43,20 @@ public class RemoteManager implements RemoteMessenger {
 	}
 
 	protected void connect(BluetoothDevice connectedDevice, boolean retry) {
+		if (isConnected()) {
+			mMainHandler.obtainMessage(DO_ON_CONNECTED, connectedDevice)
+					.sendToTarget();
+			return;
+		}
 		BluetoothSocket socket = null;
 		try {
-			socket = connectedDevice.createInsecureRfcommSocketToServiceRecord(MY_UUID);
+			mBluetoothAdapter.cancelDiscovery();
+			socket = connectedDevice.createRfcommSocketToServiceRecord(MY_UUID);
 			socket.connect();
 			mConnectedThread = new ConnectedThread(socket);
 			mConnectedThread.start();
-			mMainHandler.obtainMessage(DO_ON_CONNECTED, socket.getRemoteDevice()).sendToTarget();
+			mMainHandler.obtainMessage(DO_ON_CONNECTED,
+					socket.getRemoteDevice()).sendToTarget();
 		} catch (IOException e) {
 			if (socket != null) {
 				try {
@@ -75,7 +83,7 @@ public class RemoteManager implements RemoteMessenger {
 
 	@Override
 	public void sendMessage(String message) throws IllegalStateException {
-		if (mConnectedThread == null || !mConnectedThread.isAlive()) {
+		if (!isConnected()) {
 			throw new IllegalStateException("Not connected");
 		}
 		mConnectedThread.write(message + "\n");
@@ -83,11 +91,13 @@ public class RemoteManager implements RemoteMessenger {
 
 	private Callback getCallback() {
 		if (mCallback.get() == null) {
-			mCallback = new WeakReference<RemoteMessenger.Callback>(STUB_CALLBACK);
+			mCallback = new WeakReference<RemoteMessenger.Callback>(
+					STUB_CALLBACK);
 		}
 		synchronized (RemoteMessenger.class) {
 			if (mCallback.get() == null) {
-				mCallback = new WeakReference<RemoteMessenger.Callback>(STUB_CALLBACK);
+				mCallback = new WeakReference<RemoteMessenger.Callback>(
+						STUB_CALLBACK);
 			}
 			return mCallback.get();
 		}
@@ -139,7 +149,8 @@ public class RemoteManager implements RemoteMessenger {
 
 		@Override
 		public void run() {
-			BufferedReader r = new BufferedReader(new InputStreamReader(mInputStream));
+			BufferedReader r = new BufferedReader(new InputStreamReader(
+					mInputStream));
 
 			while (true) {
 				try {
@@ -148,10 +159,12 @@ public class RemoteManager implements RemoteMessenger {
 
 						@Override
 						public void run() {
-							mMainHandler.obtainMessage(DO_ON_RECEIVE_MESSAGE, string).sendToTarget();
+							mMainHandler.obtainMessage(DO_ON_RECEIVE_MESSAGE,
+									string).sendToTarget();
 						}
 					});
 				} catch (IOException e) {
+					e.printStackTrace();
 					break;
 				}
 			}
@@ -160,7 +173,8 @@ public class RemoteManager implements RemoteMessenger {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			mMainHandler.obtainMessage(DO_DISCONNECTED, mSocket.getRemoteDevice()).sendToTarget();
+			mMainHandler.obtainMessage(DO_DISCONNECTED,
+					mSocket.getRemoteDevice()).sendToTarget();
 		}
 
 		public void write(String message) {
@@ -195,7 +209,8 @@ public class RemoteManager implements RemoteMessenger {
 	}
 
 	private BluetoothDevice getConnectedDevice() {
-		Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+		Set<BluetoothDevice> pairedDevices = mBluetoothAdapter
+				.getBondedDevices();
 		for (BluetoothDevice device : pairedDevices) {
 			device.fetchUuidsWithSdp();
 			for (ParcelUuid id : device.getUuids()) {
@@ -234,7 +249,8 @@ public class RemoteManager implements RemoteMessenger {
 
 	private static final int DO_CONNECT = 4;
 
-	private final HandlerThread mWorkerThread = new HandlerThread("RemoteManagerWorker");
+	private final HandlerThread mWorkerThread = new HandlerThread(
+			"RemoteManagerWorker");
 
 	private final Handler mWorkerHandler;
 
@@ -250,7 +266,8 @@ public class RemoteManager implements RemoteMessenger {
 			case DO_CONNECT:
 				BluetoothDevice connectedDevice = getConnectedDevice();
 				if (connectedDevice == null) {
-					mMainHandler.obtainMessage(DO_CONNECTION_FAILED).sendToTarget();
+					mMainHandler.obtainMessage(DO_CONNECTION_FAILED)
+							.sendToTarget();
 					return;
 				}
 
