@@ -15,7 +15,7 @@ public class StringMessageReader implements MessageReceiver<String> {
 	}
 
 	@Override
-	public boolean read(final OnReceiveMessageListener<String> listener) {
+	public boolean read(final OnReceiveMessageListener<? super String> listener) {
 		final String string;
 		try {
 			string = r.readLine();
