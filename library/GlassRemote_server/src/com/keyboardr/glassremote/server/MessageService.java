@@ -1,9 +1,7 @@
 package com.keyboardr.glassremote.server;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.UUID;
 
@@ -19,13 +17,18 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 
-public abstract class MessageService extends Service {
+import com.keyboardr.glassremote.common.receiver.MessageReceiver;
+import com.keyboardr.glassremote.common.sender.MessageSender;
+
+public abstract class MessageService<S, R> extends Service {
 	private BluetoothAdapter mBluetoothAdapter;
 	private AcceptThread mAcceptThread;
 	private ConnectedThread mConnectedThread;
 
 	private final String NAME;
 	private final UUID MY_UUID;
+	private final MessageReceiver<R> mReader;
+	private final MessageSender<S> mSender;
 
 	private class AcceptThread extends Thread {
 		private BluetoothServerSocket mServerSocket;
@@ -78,7 +81,8 @@ public abstract class MessageService extends Service {
 		}
 	}
 
-	private class ConnectedThread extends Thread {
+	private class ConnectedThread extends Thread implements
+			MessageReceiver.OnReceiveMessageListener<R> {
 		private final BluetoothSocket mSocket;
 		private final InputStream mInputStream;
 		private final OutputStream mOutputStream;
@@ -98,28 +102,15 @@ public abstract class MessageService extends Service {
 			mInputStream = tmpIn;
 			mOutputStream = tmpOut;
 
+			mSender.setOutputStream(mOutputStream);
+
 		}
 
 		@Override
 		public void run() {
-			BufferedReader r = new BufferedReader(new InputStreamReader(
-					mInputStream));
+			mReader.setInputStream(mInputStream);
 
-			while (true) {
-				try {
-					final String string = r.readLine();
-					if (string != null) {
-						mHandler.post(new Runnable() {
-
-							@Override
-							public void run() {
-								onReceiveMessage(string);
-							}
-						});
-					}
-				} catch (IOException e) {
-					break;
-				}
+			while (mReader.read(this)) {
 			}
 			try {
 				mSocket.close();
@@ -129,12 +120,8 @@ public abstract class MessageService extends Service {
 			connectionLost(mSocket);
 		}
 
-		public void write(String message) {
-			try {
-				mOutputStream.write(message.getBytes());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+		public void write(S message) {
+			mSender.sendMessage(message);
 		}
 
 		public void cancel() {
@@ -144,11 +131,25 @@ public abstract class MessageService extends Service {
 				e.printStackTrace();
 			}
 		}
+
+		@Override
+		public void onReceiveMessage(final R message) {
+			mHandler.post(new Runnable() {
+
+				@Override
+				public void run() {
+					MessageService.this.onReceiveMessage(message);
+				}
+			});
+		}
 	}
 
-	protected MessageService(String name, UUID uuid) {
+	protected MessageService(String name, UUID uuid, MessageSender<S> sender,
+			MessageReceiver<R> receiver) {
 		NAME = name;
 		MY_UUID = uuid;
+		mSender = sender;
+		mReader = receiver;
 	}
 
 	@Override
@@ -214,17 +215,17 @@ public abstract class MessageService extends Service {
 
 	protected abstract void onDisconnected(BluetoothDevice remoteDevice);
 
-	protected abstract void onReceiveMessage(String message);
+	protected abstract void onReceiveMessage(R message);
 
 	protected boolean isConnected() {
 		return mConnectedThread != null && mConnectedThread.isAlive();
 	}
 
-	protected void sendMessage(String message) {
+	protected void sendMessage(S message) {
 		if (!isConnected()) {
 			throw new IllegalStateException("Not connected");
 		}
-		mConnectedThread.write(message + "\n");
+		mConnectedThread.write(message);
 	}
 
 }
