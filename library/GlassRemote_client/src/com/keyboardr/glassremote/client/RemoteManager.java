@@ -1,9 +1,7 @@
 package com.keyboardr.glassremote.client;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.util.Set;
@@ -18,17 +16,22 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.ParcelUuid;
 
-public class RemoteManager implements RemoteMessenger {
+import com.keyboardr.glassremote.common.receiver.MessageReceiver;
+import com.keyboardr.glassremote.common.receiver.MessageReceiver.OnReceiveMessageListener;
+import com.keyboardr.glassremote.common.sender.MessageSender;
 
-	private WeakReference<Callback> mCallback = new WeakReference<Callback>(
+public class RemoteManager<S, R> implements RemoteMessenger<S, R>,
+		OnReceiveMessageListener<R> {
+
+	private WeakReference<Callback<? super R>> mCallback = new WeakReference<Callback<? super R>>(
 			STUB_CALLBACK);
 
 	@Override
-	public void setCallback(Callback callback) {
+	public void setCallback(Callback<? super R> callback) {
 		if (callback == null) {
-			mCallback = new WeakReference<Callback>(STUB_CALLBACK);
+			mCallback = new WeakReference<Callback<? super R>>(STUB_CALLBACK);
 		} else {
-			mCallback = new WeakReference<Callback>(callback);
+			mCallback = new WeakReference<Callback<? super R>>(callback);
 		}
 	}
 
@@ -82,21 +85,21 @@ public class RemoteManager implements RemoteMessenger {
 	}
 
 	@Override
-	public void sendMessage(String message) throws IllegalStateException {
+	public void sendMessage(S message) throws IllegalStateException {
 		if (!isConnected()) {
 			throw new IllegalStateException("Not connected");
 		}
-		mConnectedThread.write(message + "\n");
+		mSender.sendMessage(message);
 	}
 
-	private Callback getCallback() {
+	private Callback<? super R> getCallback() {
 		if (mCallback.get() == null) {
-			mCallback = new WeakReference<RemoteMessenger.Callback>(
+			mCallback = new WeakReference<RemoteMessenger.Callback<? super R>>(
 					STUB_CALLBACK);
 		}
 		synchronized (RemoteMessenger.class) {
 			if (mCallback.get() == null) {
-				mCallback = new WeakReference<RemoteMessenger.Callback>(
+				mCallback = new WeakReference<RemoteMessenger.Callback<? super R>>(
 						STUB_CALLBACK);
 			}
 			return mCallback.get();
@@ -105,7 +108,7 @@ public class RemoteManager implements RemoteMessenger {
 
 	private final UUID MY_UUID;
 
-	private static final Callback STUB_CALLBACK = new Callback() {
+	private static final Callback<Object> STUB_CALLBACK = new Callback<Object>() {
 
 		@Override
 		public void onConnected(BluetoothDevice device) {
@@ -120,7 +123,7 @@ public class RemoteManager implements RemoteMessenger {
 		}
 
 		@Override
-		public void onReceiveMessage(String message) {
+		public void onReceiveMessage(Object message) {
 		}
 
 	};
@@ -144,29 +147,14 @@ public class RemoteManager implements RemoteMessenger {
 
 			mInputStream = tmpIn;
 			mOutputStream = tmpOut;
-
+			mSender.setOutputStream(mOutputStream);
 		}
 
 		@Override
 		public void run() {
-			BufferedReader r = new BufferedReader(new InputStreamReader(
-					mInputStream));
+			mReceiver.setInputStream(mInputStream);
 
-			while (true) {
-				try {
-					final String string = r.readLine();
-					mMainHandler.post(new Runnable() {
-
-						@Override
-						public void run() {
-							mMainHandler.obtainMessage(DO_ON_RECEIVE_MESSAGE,
-									string).sendToTarget();
-						}
-					});
-				} catch (IOException e) {
-					e.printStackTrace();
-					break;
-				}
+			while (mReceiver.read(RemoteManager.this)) {
 			}
 			try {
 				mSocket.close();
@@ -175,14 +163,6 @@ public class RemoteManager implements RemoteMessenger {
 			}
 			mMainHandler.obtainMessage(DO_DISCONNECTED,
 					mSocket.getRemoteDevice()).sendToTarget();
-		}
-
-		public void write(String message) {
-			try {
-				mOutputStream.write(message.getBytes());
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
 		}
 
 		public void cancel() {
@@ -198,7 +178,13 @@ public class RemoteManager implements RemoteMessenger {
 
 	private ConnectedThread mConnectedThread;
 
-	public RemoteManager(UUID uuid) {
+	private final MessageSender<S> mSender;
+	private final MessageReceiver<R> mReceiver;
+
+	public RemoteManager(UUID uuid, MessageSender<S> sender,
+			MessageReceiver<R> receiver) {
+		mSender = sender;
+		mReceiver = receiver;
 		mWorkerThread.start();
 		mWorkerHandler = new WorkerHandler(mWorkerThread.getLooper());
 		MY_UUID = uuid;
@@ -228,6 +214,7 @@ public class RemoteManager implements RemoteMessenger {
 	private static final int DO_ON_RECEIVE_MESSAGE = 3;
 
 	private final Handler mMainHandler = new Handler(Looper.getMainLooper()) {
+		@SuppressWarnings("unchecked")
 		@Override
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
@@ -241,7 +228,7 @@ public class RemoteManager implements RemoteMessenger {
 				getCallback().onDisconnected((BluetoothDevice) msg.obj);
 				break;
 			case DO_ON_RECEIVE_MESSAGE:
-				getCallback().onReceiveMessage((String) msg.obj);
+				getCallback().onReceiveMessage((R) msg.obj);
 				break;
 			}
 		}
@@ -276,6 +263,12 @@ public class RemoteManager implements RemoteMessenger {
 			}
 		}
 
+	}
+
+	@Override
+	public void onReceiveMessage(R message) {
+		mMainHandler.obtainMessage(DO_ON_RECEIVE_MESSAGE, message)
+				.sendToTarget();
 	}
 
 }

@@ -7,17 +7,20 @@ import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
 
-public class RemoteMessengerService extends Service {
+import com.keyboardr.glassremote.common.receiver.MessageReceiver;
+import com.keyboardr.glassremote.common.sender.MessageSender;
+
+public abstract class RemoteMessengerService<S, R> extends Service {
 
 	private final RemoteConnectionBinder mBinder = new RemoteConnectionBinder();
 
-	private final RemoteManager mManager;
+	private final RemoteManager<S, R> mManager;
 
 	private class RemoteConnectionBinder extends Binder implements
-			RemoteMessenger {
+			RemoteMessenger<S, R> {
 
 		@Override
-		public void setCallback(Callback callback) {
+		public void setCallback(Callback<? super R> callback) {
 			mManager.setCallback(callback);
 		}
 
@@ -37,14 +40,15 @@ public class RemoteMessengerService extends Service {
 		}
 
 		@Override
-		public void sendMessage(String message) throws IllegalStateException {
+		public void sendMessage(S message) throws IllegalStateException {
 			mManager.sendMessage(message);
 		}
 
 	}
 
-	protected RemoteMessengerService(UUID uuid) {
-		mManager = new RemoteManager(uuid);
+	protected RemoteMessengerService(UUID uuid, MessageSender<S> sender,
+			MessageReceiver<R> receiver) {
+		mManager = new RemoteManager<S, R>(uuid, sender, receiver);
 	}
 
 	@Override
