@@ -20,6 +20,8 @@ import android.util.Log;
 import com.keyboardr.glassremote.common.receiver.MessageReceiver;
 import com.keyboardr.glassremote.common.sender.MessageSender;
 
+//Ignore warning since access to the R class shouldn't be needed at this level of abstraction
+@SuppressWarnings("hiding")
 public abstract class MessageService<S, R> extends Service {
 	private BluetoothAdapter mBluetoothAdapter;
 	private AcceptThread mAcceptThread;
@@ -118,10 +120,6 @@ public abstract class MessageService<S, R> extends Service {
 				e.printStackTrace();
 			}
 			connectionLost(mSocket);
-		}
-
-		public void write(S message) {
-			mSender.sendMessage(message);
 		}
 
 		public void cancel() {
@@ -225,7 +223,7 @@ public abstract class MessageService<S, R> extends Service {
 		if (!isConnected()) {
 			throw new IllegalStateException("Not connected");
 		}
-		mConnectedThread.write(message);
+		mSender.sendMessage(message);
 	}
 
 }
