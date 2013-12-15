@@ -16,6 +16,10 @@ public class StringMessageReader implements MessageReceiver<String> {
 
 	@Override
 	public boolean read(final OnReceiveMessageListener<? super String> listener) {
+		if (r == null) {
+			throw new IllegalStateException(
+					"read() called with no InputStream set");
+		}
 		final String string;
 		try {
 			string = r.readLine();
