@@ -14,59 +14,59 @@ public abstract class RemoteMessengerService<S, R> extends Service {
 
 	private final RemoteConnectionBinder mBinder = new RemoteConnectionBinder();
 
-	private final RemoteManager<S, R> mManager;
+	private final RemoteMessenger<S, R> mMessenger;
 
 	private class RemoteConnectionBinder extends Binder implements
 			RemoteMessenger<S, R> {
 
 		@Override
 		public void setCallback(Callback<? super R> callback) {
-			mManager.setCallback(callback);
+			mMessenger.setCallback(callback);
 		}
 
 		@Override
 		public boolean isConnected() {
-			return mManager.isConnected();
+			return mMessenger.isConnected();
 		}
 
 		@Override
 		public void requestConnect() {
-			mManager.requestConnect();
+			mMessenger.requestConnect();
 		}
 
 		@Override
 		public void disconnect() {
-			mManager.disconnect();
+			mMessenger.disconnect();
 		}
 
 		@Override
 		public void sendMessage(S message) throws IllegalStateException {
-			mManager.sendMessage(message);
+			mMessenger.sendMessage(message);
 		}
 
 	}
 
 	protected RemoteMessengerService(UUID uuid, MessageSender<S> sender,
 			MessageReceiver<R> receiver) {
-		mManager = new RemoteManager<S, R>(uuid, sender, receiver);
+		mMessenger = new RemoteMessengerImpl<S, R>(uuid, sender, receiver);
 	}
 
 	@Override
 	public void onDestroy() {
-		mManager.disconnect();
+		mMessenger.disconnect();
 		super.onDestroy();
 	}
 
 	@Override
 	public IBinder onBind(Intent intent) {
-		mManager.setCallback(null);
+		mMessenger.setCallback(null);
 		return mBinder;
 	}
 
 	@Override
 	public boolean onUnbind(Intent intent) {
-		mManager.setCallback(null);
-		mManager.disconnect();
+		mMessenger.setCallback(null);
+		mMessenger.disconnect();
 		return super.onUnbind(intent);
 	}
 

@@ -20,7 +20,19 @@ import com.keyboardr.glassremote.common.receiver.MessageReceiver;
 import com.keyboardr.glassremote.common.receiver.MessageReceiver.OnReceiveMessageListener;
 import com.keyboardr.glassremote.common.sender.MessageSender;
 
-public class RemoteManager<S, R> implements RemoteMessenger<S, R>,
+/**
+ * @author Joshua Brown
+ * 
+ *         Concrete implementation of {@link RemoteMessenger}.
+ * 
+ * @param <S>
+ *            The type of messages this RemoteManager will send to the remote
+ *            server
+ * @param <R>
+ *            The type of messages this RemoteManagerwill receive from the
+ *            remote server
+ */
+public class RemoteMessengerImpl<S, R> implements RemoteMessenger<S, R>,
 		OnReceiveMessageListener<R> {
 
 	private WeakReference<Callback<? super R>> mCallback = new WeakReference<Callback<? super R>>(
@@ -45,7 +57,7 @@ public class RemoteManager<S, R> implements RemoteMessenger<S, R>,
 		mWorkerHandler.obtainMessage(DO_CONNECT).sendToTarget();
 	}
 
-	protected void connect(BluetoothDevice connectedDevice, boolean retry) {
+	private void connect(BluetoothDevice connectedDevice, boolean retry) {
 		if (isConnected()) {
 			mMainHandler.obtainMessage(DO_ON_CONNECTED, connectedDevice)
 					.sendToTarget();
@@ -154,7 +166,7 @@ public class RemoteManager<S, R> implements RemoteMessenger<S, R>,
 		public void run() {
 			mReceiver.setInputStream(mInputStream);
 
-			while (mReceiver.read(RemoteManager.this)) {
+			while (mReceiver.read(RemoteMessengerImpl.this)) {
 			}
 			try {
 				mSocket.close();
@@ -181,7 +193,7 @@ public class RemoteManager<S, R> implements RemoteMessenger<S, R>,
 	private final MessageSender<S> mSender;
 	private final MessageReceiver<R> mReceiver;
 
-	public RemoteManager(UUID uuid, MessageSender<S> sender,
+	public RemoteMessengerImpl(UUID uuid, MessageSender<S> sender,
 			MessageReceiver<R> receiver) {
 		mSender = sender;
 		mReceiver = receiver;
