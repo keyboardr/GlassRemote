@@ -10,6 +10,24 @@ import android.os.IBinder;
 import com.keyboardr.glassremote.common.receiver.MessageReceiver;
 import com.keyboardr.glassremote.common.sender.MessageSender;
 
+/**
+ * A Service that helps manage the state of a {@link RemoteMessenger} when
+ * accessed from multiple Contexts. Components can bind to subclasses of this
+ * Service and get a {@link RemoteMessenger} instance as a Binder
+ * implementation. This class does not yet support IPC, although future
+ * implementations might.
+ * 
+ * @author Joshua Brown
+ * 
+ * @param <S>
+ *            The type of messages this RemoteMessenger will send to the remote
+ *            server. The corresponding MessageService on the remote server
+ *            should receive messages as S or some superclass thereof.
+ * @param <R>
+ *            The type of messages this RemoteMessanger will receive from the
+ *            remote server. The corresponding MessageService on the remote
+ *            server should send messages as R or some subclass thereof.
+ */
 public abstract class RemoteMessengerService<S, R> extends Service {
 
 	private final RemoteConnectionBinder mBinder = new RemoteConnectionBinder();
@@ -46,6 +64,20 @@ public abstract class RemoteMessengerService<S, R> extends Service {
 
 	}
 
+	/**
+	 * @param uuid
+	 *            A UUID shared between the remote server and this client. UUIDs
+	 *            can be obtained at <a
+	 *            href="http://www.uuidgenerator.net/">http
+	 *            ://www.uuidgenerator.net/</a> and instantiated using
+	 *            {@link UUID#fromString(String)}.
+	 * @param sender
+	 *            The MessageSender providing the implementation for sending S
+	 *            messages
+	 * @param receiver
+	 *            The MessageReceiver providing the implementation for receiving
+	 *            R messages
+	 */
 	protected RemoteMessengerService(UUID uuid, MessageSender<S> sender,
 			MessageReceiver<R> receiver) {
 		mMessenger = new RemoteMessengerImpl<S, R>(uuid, sender, receiver);

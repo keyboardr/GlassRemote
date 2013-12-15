@@ -41,7 +41,9 @@ public class RemoteMessengerImpl<S, R> implements RemoteMessenger<S, R>,
 
 	/**
 	 * Get an instance of RemoteMessenger that sends and receives String
-	 * messages
+	 * messages<br/>
+	 * <br/>
+	 * <b>Note:</b> Messages are separated by '\n' characters
 	 * 
 	 * @param uuid
 	 *            A UUID shared between the remote server and this client. UUIDs
