@@ -6,11 +6,10 @@ import com.keyboardr.glassremote.common.receiver.StringMessageReader;
 import com.keyboardr.glassremote.common.sender.StringMessageSender;
 
 /**
- * A version of {@link RemoteMessengerService} that sends and receives String
- * messages
- * 
- * Note: Messages should not contain "\n" characters. These are used as
- * delimeters between messages
+ * A version of {@link RemoteMessengerService} that sends and receives
+ * <code>String</code> messages<br/>
+ * <br/>
+ * <b>Note:</b> Messages are separated by <code>'\n'</code> characters
  * 
  * @author Joshua Brown
  * 
@@ -19,9 +18,12 @@ public abstract class StringRemoteMessengerService extends
 		RemoteMessengerService<String, String> {
 
 	/**
+	 * Class constructor. Concrete implementations must have a zero-argument
+	 * constructor.
+	 * 
 	 * @param uuid
-	 *            A UUID shared between the remote server and this client. UUIDs
-	 *            can be obtained at <a
+	 *            a <code>UUID</code> shared between the remote server and this
+	 *            client. UUIDs can be obtained at <a
 	 *            href="http://www.uuidgenerator.net/">http
 	 *            ://www.uuidgenerator.net/</a> and instantiated using
 	 *            {@link UUID#fromString(String)}.

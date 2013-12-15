@@ -25,33 +25,35 @@ import com.keyboardr.glassremote.common.sender.StringMessageSender;
 /**
  * Concrete implementation of {@link RemoteMessenger}. May be used directly if
  * scope is contained to a single component. See {@link RemoteMessengerService}
- * if multiple Contexts will need to communicate with the remote server.
+ * if multiple <code>Contexts</code> will need to communicate with the remote
+ * server.
  * 
  * @author Joshua Brown
  * 
  * @param <S>
- *            The type of messages this RemoteManager will send to the remote
- *            server
+ *            the type of messages this <code>RemoteMessenger</code> will send
+ *            to the remote server
  * @param <R>
- *            The type of messages this RemoteManagerwill receive from the
- *            remote server
+ *            the type of messages this <code>RemoteMessenger</code> will
+ *            receive from the remote server
  */
 public class RemoteMessengerImpl<S, R> implements RemoteMessenger<S, R>,
 		OnReceiveMessageListener<R> {
 
 	/**
-	 * Get an instance of RemoteMessenger that sends and receives String
-	 * messages<br/>
+	 * Gets an instance of <code>RemoteMessenger</code> that sends and receives
+	 * <code>String</code> messages<br/>
 	 * <br/>
-	 * <b>Note:</b> Messages are separated by '\n' characters
+	 * <b>Note:</b> Messages are separated by <code>'\n'</code> characters
 	 * 
 	 * @param uuid
-	 *            A UUID shared between the remote server and this client. UUIDs
-	 *            can be obtained at <a
+	 *            a <code>UUID</code> shared between the remote server and this
+	 *            client. UUIDs can be obtained at <a
 	 *            href="http://www.uuidgenerator.net/">http
 	 *            ://www.uuidgenerator.net/</a> and instantiated using
 	 *            {@link UUID#fromString(String)}.
-	 * @return A RemoteMessenger that sends and receives String messages
+	 * @return a <code>RemoteMessenger</code> that sends and receives
+	 *         <code>String</code> messages
 	 */
 	public static RemoteMessenger<String, String> getStringRemoteMessenger(
 			UUID uuid) {
@@ -218,18 +220,20 @@ public class RemoteMessengerImpl<S, R> implements RemoteMessenger<S, R>,
 	private final MessageReceiver<R> mReceiver;
 
 	/**
+	 * Class constructor
+	 * 
 	 * @param uuid
-	 *            A UUID shared between the remote server and this client. UUIDs
-	 *            can be obtained at <a
+	 *            a <code>UUID</code> shared between the remote server and this
+	 *            client. UUIDs can be obtained at <a
 	 *            href="http://www.uuidgenerator.net/">http
 	 *            ://www.uuidgenerator.net/</a> and instantiated using
 	 *            {@link UUID#fromString(String)}.
 	 * @param sender
-	 *            The MessageSender providing the implementation for sending S
-	 *            messages
+	 *            the <code>MessageSender</code> providing the implementation
+	 *            for sending <code>S</code> messages
 	 * @param receiver
-	 *            The MessageReceiver providing the implementation for receiving
-	 *            R messages
+	 *            the <code>MessageReceiver</code> providing the implementation
+	 *            for receiving <code>R</code> messages
 	 */
 	public RemoteMessengerImpl(UUID uuid, MessageSender<S> sender,
 			MessageReceiver<R> receiver) {

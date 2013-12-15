@@ -11,22 +11,24 @@ import com.keyboardr.glassremote.common.receiver.MessageReceiver;
 import com.keyboardr.glassremote.common.sender.MessageSender;
 
 /**
- * A Service that helps manage the state of a {@link RemoteMessenger} when
- * accessed from multiple Contexts. Components can bind to subclasses of this
- * Service and get a {@link RemoteMessenger} instance as a Binder
- * implementation. This class does not yet support IPC, although future
- * implementations might.
+ * A <code>Service</code> that helps manage the state of a
+ * {@link RemoteMessenger} when accessed from multiple <code>Contexts</code>.
+ * Components can bind to subclasses of this <code>Service</code> and get a
+ * {@link RemoteMessenger} instance as a <code>Binder</code> implementation.
+ * This class does not yet support IPC, although future implementations might.
  * 
  * @author Joshua Brown
  * 
  * @param <S>
- *            The type of messages this RemoteMessenger will send to the remote
- *            server. The corresponding MessageService on the remote server
- *            should receive messages as S or some superclass thereof.
+ *            the type of messages this <code>RemoteMessenger</code> will send
+ *            to the remote server. The corresponding
+ *            <code>MessageService</code> on the remote server should receive
+ *            messages as <code>S</code> or some superclass thereof.
  * @param <R>
- *            The type of messages this RemoteMessanger will receive from the
- *            remote server. The corresponding MessageService on the remote
- *            server should send messages as R or some subclass thereof.
+ *            the type of messages this <code>RemoteMessenger</code> will
+ *            receive from the remote server. The corresponding
+ *            <code>MessageService</code> on the remote server should send
+ *            messages as <code>R</code> or some subclass thereof.
  */
 public abstract class RemoteMessengerService<S, R> extends Service {
 
@@ -65,18 +67,21 @@ public abstract class RemoteMessengerService<S, R> extends Service {
 	}
 
 	/**
+	 * Class constructor. Concrete implementations must have a zero-argument
+	 * constructor.
+	 * 
 	 * @param uuid
-	 *            A UUID shared between the remote server and this client. UUIDs
-	 *            can be obtained at <a
+	 *            a <code>UUID</code> shared between the remote server and this
+	 *            client. UUIDs can be obtained at <a
 	 *            href="http://www.uuidgenerator.net/">http
 	 *            ://www.uuidgenerator.net/</a> and instantiated using
 	 *            {@link UUID#fromString(String)}.
 	 * @param sender
-	 *            The MessageSender providing the implementation for sending S
-	 *            messages
+	 *            the <code>MessageSender</code> providing the implementation
+	 *            for sending <code>S</code> messages
 	 * @param receiver
-	 *            The MessageReceiver providing the implementation for receiving
-	 *            R messages
+	 *            the <code>MessageReceiver</code> providing the implementation
+	 *            for receiving <code>R</code> messages
 	 */
 	protected RemoteMessengerService(UUID uuid, MessageSender<S> sender,
 			MessageReceiver<R> receiver) {
