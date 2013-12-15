@@ -5,9 +5,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+/**
+ * Reads messages and converts them to <code>Strings</code>. Messages are
+ * separated by <code>'\n'</code> characters.
+ * 
+ * @author Joshua Brown
+ * 
+ */
 public class StringMessageReader implements MessageReceiver<String> {
 
 	private BufferedReader r;
+
+	/**
+	 * Class constructor
+	 */
+	public StringMessageReader() {
+	}
 
 	@Override
 	public void setInputStream(InputStream input) {

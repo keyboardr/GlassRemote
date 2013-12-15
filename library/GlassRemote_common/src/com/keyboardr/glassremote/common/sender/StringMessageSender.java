@@ -3,9 +3,22 @@ package com.keyboardr.glassremote.common.sender;
 import java.io.IOException;
 import java.io.OutputStream;
 
+/**
+ * Sends messages as <code>Strings</code>. Messages are separated by
+ * <code>'\n'</code> characters.
+ * 
+ * @author Joshua Brown
+ * 
+ */
 public class StringMessageSender implements MessageSender<String> {
 
 	private OutputStream mOutputStream;
+
+	/**
+	 * Class constructor
+	 */
+	public StringMessageSender() {
+	}
 
 	@Override
 	public void setOutputStream(OutputStream output) {
