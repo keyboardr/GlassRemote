@@ -18,12 +18,16 @@ import android.os.ParcelUuid;
 
 import com.keyboardr.glassremote.common.receiver.MessageReceiver;
 import com.keyboardr.glassremote.common.receiver.MessageReceiver.OnReceiveMessageListener;
+import com.keyboardr.glassremote.common.receiver.StringMessageReader;
 import com.keyboardr.glassremote.common.sender.MessageSender;
+import com.keyboardr.glassremote.common.sender.StringMessageSender;
 
 /**
- * @author Joshua Brown
+ * Concrete implementation of {@link RemoteMessenger}. May be used directly if
+ * scope is contained to a single component. See {@link RemoteMessengerService}
+ * if multiple Contexts will need to communicate with the remote server.
  * 
- *         Concrete implementation of {@link RemoteMessenger}.
+ * @author Joshua Brown
  * 
  * @param <S>
  *            The type of messages this RemoteManager will send to the remote
@@ -34,6 +38,24 @@ import com.keyboardr.glassremote.common.sender.MessageSender;
  */
 public class RemoteMessengerImpl<S, R> implements RemoteMessenger<S, R>,
 		OnReceiveMessageListener<R> {
+
+	/**
+	 * Get an instance of RemoteMessenger that sends and receives String
+	 * messages
+	 * 
+	 * @param uuid
+	 *            A UUID shared between the remote server and this client. UUIDs
+	 *            can be obtained at <a
+	 *            href="http://www.uuidgenerator.net/">http
+	 *            ://www.uuidgenerator.net/</a> and instantiated using
+	 *            {@link UUID#fromString(String)}.
+	 * @return A RemoteMessenger that sends and receives String messages
+	 */
+	public static RemoteMessenger<String, String> getStringRemoteMessenger(
+			UUID uuid) {
+		return new RemoteMessengerImpl<String, String>(uuid,
+				new StringMessageSender(), new StringMessageReader());
+	}
 
 	private WeakReference<Callback<? super R>> mCallback = new WeakReference<Callback<? super R>>(
 			STUB_CALLBACK);
@@ -193,6 +215,20 @@ public class RemoteMessengerImpl<S, R> implements RemoteMessenger<S, R>,
 	private final MessageSender<S> mSender;
 	private final MessageReceiver<R> mReceiver;
 
+	/**
+	 * @param uuid
+	 *            A UUID shared between the remote server and this client. UUIDs
+	 *            can be obtained at <a
+	 *            href="http://www.uuidgenerator.net/">http
+	 *            ://www.uuidgenerator.net/</a> and instantiated using
+	 *            {@link UUID#fromString(String)}.
+	 * @param sender
+	 *            The MessageSender providing the implementation for sending S
+	 *            messages
+	 * @param receiver
+	 *            The MessageReceiver providing the implementation for receiving
+	 *            R messages
+	 */
 	public RemoteMessengerImpl(UUID uuid, MessageSender<S> sender,
 			MessageReceiver<R> receiver) {
 		mSender = sender;

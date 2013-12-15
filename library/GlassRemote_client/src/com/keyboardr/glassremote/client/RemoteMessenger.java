@@ -5,16 +5,19 @@ import java.lang.ref.WeakReference;
 import android.bluetooth.BluetoothDevice;
 
 /**
- * @author Joshua Brown
+ * Interface for communicating with the remote server. There should be a
+ * MessageService<R, S> running on that remote server.
  * 
- *         Interface for communicating with the remote server
+ * @author Joshua Brown
  * 
  * @param <S>
  *            The type of messages this RemoteMessenger will send to the remote
- *            server
+ *            server. The corresponding MessageService on the remote server
+ *            should receive messages as S or some superclass thereof.
  * @param <R>
  *            The type of messages this RemoteMessanger will receive from the
- *            remote server
+ *            remote server. The corresponding MessageService on the remote
+ *            server should send messages as R or some subclass thereof.
  */
 public interface RemoteMessenger<S, R> {
 
