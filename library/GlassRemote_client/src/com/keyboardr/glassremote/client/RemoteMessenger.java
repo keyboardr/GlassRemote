@@ -120,6 +120,9 @@ public interface RemoteMessenger<S, R> {
 
 	public static class Factory {
 
+		private Factory() {
+		}
+
 		/**
 		 * Gets an instance of <code>RemoteMessenger</code> that sends and
 		 * receives <code>String</code> messages<br/>
