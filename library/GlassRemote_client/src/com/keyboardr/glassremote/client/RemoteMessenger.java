@@ -78,6 +78,9 @@ public interface RemoteMessenger<S, R> {
 	public void setCallback(Callback<? super R> callback);
 
 	/**
+	 * Checks if this <code>RemoteMessenger</code> is connected to a remote
+	 * server
+	 * 
 	 * @return <code>true</code> iff this <code>RemoteMessenger</code> can send
 	 *         and receive messages from a remote server
 	 */

@@ -20,7 +20,19 @@ import android.util.Log;
 import com.keyboardr.glassremote.common.receiver.MessageReceiver;
 import com.keyboardr.glassremote.common.sender.MessageSender;
 
-//Ignore warning since access to the R class shouldn't be needed at this level of abstraction
+/**
+ * Sends and receives messages with a remote client. This service must be
+ * running in order for a remote client to connect.
+ * 
+ * @author Joshua Brown
+ * 
+ * @param <S>
+ *            type of messages to send to the remote client
+ * @param <R>
+ *            type of messages to receive from the remote client
+ */
+// Ignore warning since access to the R class shouldn't be needed at this level
+// of abstraction
 @SuppressWarnings("hiding")
 public abstract class MessageService<S, R> extends Service {
 	private BluetoothAdapter mBluetoothAdapter;
@@ -142,6 +154,25 @@ public abstract class MessageService<S, R> extends Service {
 		}
 	}
 
+	/**
+	 * Class constructor. Concrete implementations must have a zero-argument
+	 * constructor.
+	 * 
+	 * @param name
+	 *            service name for SDP record
+	 * @param uuid
+	 *            a <code>UUID</code> shared between the remote client and this
+	 *            server. UUIDs can be obtained at <a
+	 *            href="http://www.uuidgenerator.net/">http
+	 *            ://www.uuidgenerator.net/</a> and instantiated using
+	 *            {@link UUID#fromString(String)}.
+	 * @param sender
+	 *            the <code>MessageSender</code> providing the implementation
+	 *            for sending <code>S</code> messages
+	 * @param receiver
+	 *            the <code>MessageReceiver</code> providing the implementation
+	 *            for receiving <code>R</code> messages
+	 */
 	protected MessageService(String name, UUID uuid, MessageSender<S> sender,
 			MessageReceiver<R> receiver) {
 		NAME = name;
@@ -209,16 +240,54 @@ public abstract class MessageService<S, R> extends Service {
 
 	// Accessible methods begin here
 
+	/**
+	 * A remote client has connected to this service and is able to send and
+	 * receive messages
+	 * 
+	 * @param remoteDevice
+	 *            the <code>BluetoothDevice</code> this
+	 *            <code>MessageService</code> has connected to
+	 */
 	protected abstract void onConnected(BluetoothDevice remoteDevice);
 
+	/**
+	 * A remote client has disconnected from this service and is no longer able
+	 * to send and receive messages
+	 * 
+	 * @param remoteDevice
+	 *            the <code>BluetoothDevice</code> this
+	 *            <code>MessageService</code> has disconnected from
+	 */
 	protected abstract void onDisconnected(BluetoothDevice remoteDevice);
 
+	/**
+	 * This <code>MessageService</code> has received a message from the remote
+	 * client
+	 * 
+	 * @param message
+	 *            the <code>M</code> message received from the remote client
+	 */
 	protected abstract void onReceiveMessage(R message);
 
+	/**
+	 * Checks if this <code>MessageService</code> is connected to a client
+	 * 
+	 * @return <code>true</code> iff this <code>MessageService</code> can send
+	 *         and receive messages from a remote client
+	 */
 	protected boolean isConnected() {
 		return mConnectedThread != null && mConnectedThread.isAlive();
 	}
 
+	/**
+	 * Sends a <code>S</code> message to the remote client. May be called from
+	 * the main thread
+	 * 
+	 * @param message
+	 *            the <code>S</code> message to send
+	 * @throws IllegalStateException
+	 *             If the <code>MessageService</code> is not connected
+	 */
 	protected void sendMessage(S message) {
 		if (!isConnected()) {
 			throw new IllegalStateException("Not connected");
