@@ -1,8 +1,14 @@
 package com.keyboardr.glassremote.client;
 
 import java.lang.ref.WeakReference;
+import java.util.UUID;
 
 import android.bluetooth.BluetoothDevice;
+
+import com.keyboardr.glassremote.common.receiver.MessageReceiver;
+import com.keyboardr.glassremote.common.receiver.StringMessageReader;
+import com.keyboardr.glassremote.common.sender.MessageSender;
+import com.keyboardr.glassremote.common.sender.StringMessageSender;
 
 /**
  * Interface for communicating with the remote server. There should be a
@@ -111,5 +117,52 @@ public interface RemoteMessenger<S, R> {
 	 *             If the <code>RemoteMessenger</code> is not connected
 	 */
 	public void sendMessage(S message) throws IllegalStateException;
+
+	public static class Factory {
+
+		/**
+		 * Gets an instance of <code>RemoteMessenger</code> that sends and
+		 * receives <code>String</code> messages<br/>
+		 * <br/>
+		 * <b>Note:</b> Messages are separated by <code>'\n'</code> characters
+		 * 
+		 * @param uuid
+		 *            a <code>UUID</code> shared between the remote server and
+		 *            this client. UUIDs can be obtained at <a
+		 *            href="http://www.uuidgenerator.net/">http
+		 *            ://www.uuidgenerator.net/</a> and instantiated using
+		 *            {@link UUID#fromString(String)}.
+		 * @return a <code>RemoteMessenger</code> that sends and receives
+		 *         <code>String</code> messages
+		 */
+		public static RemoteMessenger<String, String> getStringRemoteMessenger(
+				UUID uuid) {
+			return new RemoteMessengerImpl<String, String>(uuid,
+					new StringMessageSender(), new StringMessageReader());
+		}
+
+		/**
+		 * Get an instance of <code>RemoteMessenger</code> that sends
+		 * <code>S</code> and receives <code>R</code> messages
+		 * 
+		 * @param uuid
+		 *            a <code>UUID</code> shared between the remote server and
+		 *            this client. UUIDs can be obtained at <a
+		 *            href="http://www.uuidgenerator.net/">http
+		 *            ://www.uuidgenerator.net/</a> and instantiated using
+		 *            {@link UUID#fromString(String)}.
+		 * @param sender
+		 *            the <code>MessageSender</code> providing the
+		 *            implementation for sending <code>S</code> messages
+		 * @param receiver
+		 *            the <code>MessageReceiver</code> providing the
+		 *            implementation for receiving <code>R</code> messages
+		 */
+		public static <S, R> RemoteMessenger<S, R> getRemoteMessenger(
+				UUID uuid, MessageSender<S> sender, MessageReceiver<R> receiver) {
+			return new RemoteMessengerImpl<S, R>(uuid, sender, receiver);
+		}
+
+	}
 
 }

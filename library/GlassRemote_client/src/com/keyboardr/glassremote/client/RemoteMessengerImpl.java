@@ -18,9 +18,7 @@ import android.os.ParcelUuid;
 
 import com.keyboardr.glassremote.common.receiver.MessageReceiver;
 import com.keyboardr.glassremote.common.receiver.MessageReceiver.OnReceiveMessageListener;
-import com.keyboardr.glassremote.common.receiver.StringMessageReader;
 import com.keyboardr.glassremote.common.sender.MessageSender;
-import com.keyboardr.glassremote.common.sender.StringMessageSender;
 
 /**
  * Concrete implementation of {@link RemoteMessenger}. May be used directly if
@@ -37,29 +35,8 @@ import com.keyboardr.glassremote.common.sender.StringMessageSender;
  *            the type of messages this <code>RemoteMessenger</code> will
  *            receive from the remote server
  */
-public class RemoteMessengerImpl<S, R> implements RemoteMessenger<S, R>,
+class RemoteMessengerImpl<S, R> implements RemoteMessenger<S, R>,
 		OnReceiveMessageListener<R> {
-
-	/**
-	 * Gets an instance of <code>RemoteMessenger</code> that sends and receives
-	 * <code>String</code> messages<br/>
-	 * <br/>
-	 * <b>Note:</b> Messages are separated by <code>'\n'</code> characters
-	 * 
-	 * @param uuid
-	 *            a <code>UUID</code> shared between the remote server and this
-	 *            client. UUIDs can be obtained at <a
-	 *            href="http://www.uuidgenerator.net/">http
-	 *            ://www.uuidgenerator.net/</a> and instantiated using
-	 *            {@link UUID#fromString(String)}.
-	 * @return a <code>RemoteMessenger</code> that sends and receives
-	 *         <code>String</code> messages
-	 */
-	public static RemoteMessenger<String, String> getStringRemoteMessenger(
-			UUID uuid) {
-		return new RemoteMessengerImpl<String, String>(uuid,
-				new StringMessageSender(), new StringMessageReader());
-	}
 
 	private WeakReference<Callback<? super R>> mCallback = new WeakReference<Callback<? super R>>(
 			STUB_CALLBACK);
